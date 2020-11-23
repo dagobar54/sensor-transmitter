@@ -129,9 +129,7 @@ class DS3231
 	void dtFormat(const char* dateFormat, RTCDateTime dt,char *buffer);
 	void dtAlarmFormat(const char* dateFormat, RTCAlarmTime dt,char *buffer);
 
-	char* dateFormat(const char* dateFormat, RTCDateTime dt);
-	char* dateFormat(const char* dateFormat, RTCAlarmTime dt);
-
+		
 	uint8_t readStatusReg();
 	uint8_t readControlReg();
     private:
