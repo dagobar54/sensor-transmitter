@@ -142,16 +142,21 @@ void setup()
 	#endif
   
 	Wire.begin();
-	while(!bme.begin())
-	{
-		Serial.println("Could not find BME280I2C sensor!");
+	#if defined(SERIAL_DEBUG) 
+	//while(!bme.begin())
+	//{
+		bme.begin();
+	//	Serial.println("Could not find BME280I2C sensor!");
 		delay(1000);
-	}
-
+	//}
+	#else
+	bme.begin();
+	#endif
 	// Change some settings before using.
 	settings.tempOSR = BME280::OSR_X4;
 	bme.setSettings(settings);
    
+    #if defined(SERIAL_DEBUG) 
 	switch(bme.chipModel())
 	{
 		case BME280::ChipModel_BME280:
@@ -163,10 +168,12 @@ void setup()
 		default:
 			Serial.println("Found UNKNOWN sensor! Error!");
 	}
+	#endif
+	Wire.end();
 
 	// Setup and configure rf radio
 	radio.begin();  
-	radio.setPALevel(RF24_PA_MAX);
+	radio.setPALevel(RF24_PA_HIGH);
 	radio.setDataRate(RF24_2MBPS);
 	radio.setChannel(106);
   
@@ -254,7 +261,7 @@ void setTransmitState(transmit_states state)
 				clock.armAlarm1(true);
 				break;
 			case connecting_state:
-        		radio.setPALevel(RF24_PA_MAX);
+        		//radio.setPALevel(RF24_PA_MAX);
 				transmit_state=connecting_state;
 				clock.armAlarm1(true);
 				break;
@@ -264,7 +271,7 @@ void setTransmitState(transmit_states state)
 				break;
 			case lost_connectState:
 				transmit_state=lost_connectState;
-        		radio.setPALevel(RF24_PA_MAX);
+        		//radio.setPALevel(RF24_PA_MAX);
 				clock.armAlarm1(true);
 				break;
 			case disconnected_state: 
@@ -342,22 +349,7 @@ void NoneCommandAction()
 	case connecting_state:
 		if (exchange_counter==10)
 		{
-			if (longer_counter == 0){
-				//if (radio.getPALevel() > 1)
-				//	radio.setPALevel(radio.getPALevel()-1);
-				//else{
-					setTransmitState(connected_state);
-				//}
-				exchange_counter = 0;
-			}
-			else
-			{
-				if (radio.getPALevel() < 3)
-					radio.setPALevel(radio.getPALevel()+1);
-				else{
-					setTransmitState(connected_state);
-				}
-			}           
+			setTransmitState(connected_state);
 			longer_counter = 0;
 			exchange_counter = 0;
 		} 
@@ -389,22 +381,6 @@ void NoneCommandAction()
 		delay(50);
 		#endif
 	  
-		if (sensors.round_tripDelay > max_exchange_interval)
-			longer_counter++;
-		if (exchange_counter==10){
-			if (longer_counter == 0){
-				if (radio.getPALevel() > 2){
-					radio.setPALevel(radio.getPALevel()-1);
-					exchange_counter = 0;
-					}
-			}
-			else{
-					if (radio.getPALevel() < 3)
-						radio.setPALevel(radio.getPALevel()+1);
-			}           
-			longer_counter = 0;
-			exchange_counter = 0;
-			}
 		break;
 	case lost_connectState:
 		setTransmitState(connecting_state);
@@ -500,7 +476,7 @@ bool RealSend(  )
 }
 bool SendMeteoToRadioFast()
 {
-	radio.powerUp();
+	//radio.powerUp();
   	bool res =RealSend();
 	if (res){
 		radio.flush_tx();
